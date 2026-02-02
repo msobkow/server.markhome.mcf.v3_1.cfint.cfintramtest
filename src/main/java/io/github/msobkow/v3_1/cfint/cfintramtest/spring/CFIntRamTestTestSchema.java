@@ -35,6 +35,10 @@
 
 package io.github.msobkow.v3_1.cfint.cfintramtest.spring;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;

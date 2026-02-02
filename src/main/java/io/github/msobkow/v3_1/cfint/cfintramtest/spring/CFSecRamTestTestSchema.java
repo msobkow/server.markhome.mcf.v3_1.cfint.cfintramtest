@@ -35,6 +35,10 @@
 
 package io.github.msobkow.v3_1.cfint.cfintramtest.spring;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +61,47 @@ public class CFSecRamTestTestSchema {
     
     public String performTests(EntityManager em) {
 		StringBuffer messages = new StringBuffer("Starting CFSec tests...\n");
+		{
+			try {
+				LocalDateTime now = LocalDateTime.now();
+				CFLibDbKeyHash256 adminpid = new CFLibDbKeyHash256("f012301230123012301230123012301230123012301230123012301230123012");
+				CFLibDbKeyHash256 mgrpid =   new CFLibDbKeyHash256("fabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabc");
+				ICFSecSecUser secUserResults = ICFSecSchema.getBackingCFSec().getTableSecUser().readDerived(null, adminpid);
+				if( secUserResults == null ) {
+					CFSecBuffSecUser newuser = (CFSecBuffSecUser)(ICFSecSchema.getBackingCFSec().getFactorySecUser().newRec());
+					newuser.setCreatedByUserId( adminpid );
+					newuser.setCreatedAt( now );
+					newuser.setUpdatedByUserId( adminpid );
+					newuser.setUpdatedAt( now );
+					newuser.setPKey(adminpid);
+					newuser.setRequiredSecUserId( adminpid );
+					newuser.setRequiredRevision( 1 );
+					newuser.setOptionalLookupDefDev((ICFSecSecDevice)null);
+					newuser.setRequiredLoginId( "admin" );
+					newuser.setRequiredEMailAddress("admin@localhost");
+					newuser.setOptionalEMailConfirmUuid6( null );
+					newuser.setRequiredPasswordHash( computeSHA256("changeoninstall") );
+					newuser.setOptionalPasswordResetUuid6( null );
+					ICFSecSecUser secUserCreated = ICFSecSchema.getBackingCFSec().getTableSecUser().createSecUser(null, newuser);
+					if (secUserCreated == null) {
+						messages.append("Error creating secuser admin - null returned\n");
+					}
+					else {
+						messages.append("Created admin user: " + secUserCreated.toString() + "\n");
+					}
+				}
+				else {
+					messages.append("Admin user already exists: " + secUserResults.toString() + "\n");
+				}
+			}
+			catch (Exception e) {
+				String msg = "ERROR: performTests() Caught and rethrew " + e.getClass().getCanonicalName() + " while modifying or creating the 'admin' user - " + e.getMessage();
+				messages.append(msg);
+				System.err.println(msg);
+				e.printStackTrace(System.err);
+			}
+		}
+
 		ICFSecCluster[] clusterResults = ICFSecSchema.getBackingCFSec().getTableCluster().readAllDerived(null);
 		if (clusterResults == null) {
 			messages.append("Erroneously retrieved null for ICFSecSchema.getClusterTable().readAllDerived(null)\n");
@@ -228,4 +273,38 @@ public class CFSecRamTestTestSchema {
 		messages.append("CFSec tests complete\n");
 		return( messages.toString() );
 	}
+
+	// From Google's AI
+    /**
+     * Computes the SHA-256 hash of a given string and returns it as a hex string.
+     *
+     * @param text The input string to hash.
+     * @return The SHA-256 hash in hexadecimal format.
+     */
+    public static String computeSHA256(String text) {
+        try {
+            // Step 1: Get a MessageDigest instance for SHA-256
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+
+            // Step 2: Convert the input string to bytes using UTF-8 encoding
+            byte[] hashBytes = digest.digest(text.getBytes(StandardCharsets.UTF_8));
+
+            // Step 3: Convert the byte array to a hexadecimal string
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hashBytes) {
+                // Convert byte to hex (ensure two characters per byte)
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+
+            return hexString.toString();
+
+        } catch (NoSuchAlgorithmException e) {
+            // Handle the case where the algorithm is not available (highly unlikely for SHA-256)
+            throw new RuntimeException("SHA-256 algorithm not available", e);
+        }
+    }
 }
