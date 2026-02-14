@@ -35,7 +35,6 @@
 
 package io.github.msobkow.v3_1.cfint.cfintramtest.spring;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -65,6 +64,9 @@ public class CFIntRamTestStartupListener {
 
 		ICFSecSchema.getBackingCFSec().wireTableTableInstances();
 		ICFIntSchema.getBackingCFInt().wireTableTableInstances();
+
+		ICFSecSchema.getBackingCFSec().bootstrapSchema();
+		ICFIntSchema.getBackingCFInt().bootstrapSchema();
 
         System.err.println("Executing testCFSec.performTests()");
         try {
