@@ -56,8 +56,7 @@ public class CFIntRamTestStartupListener {
 		ICFSecSchema.getBackingCFSec().wireTableTableInstances();
 		ICFIntSchema.getBackingCFInt().wireTableTableInstances();
 
-		ICFSecSchema.getBackingCFSec().bootstrapSchema();
-		ICFIntSchema.getBackingCFInt().bootstrapSchema();
+		ICFIntSchema.getBackingCFInt().bootstrapSchema(ICFIntSchema.getConsolidatedTableInfo());
 
         System.err.println("Executing testCFSec.performTests()");
         try {
